@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================
+   BASE STYLES
+   ============================================= */
+
+@layer base {
+  /* Selection styling */
+  ::selection {
+    background-color: rgba(59, 130, 246, 0.3);
+    color: inherit;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus visible styling */
+  :focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Dark mode scrollbar */
+  .dark ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* =============================================
+   COMPONENT STYLES
+   ============================================= */
+
+@layer components {
+  /* Glassmorphism Card - fond opaque pour bloquer les effets derrière */
+  .glass {
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .glass {
+    background: rgba(15, 23, 42, 0.95);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Card component - fond opaque */
+  .card {
+    @apply rounded-3xl p-5 md:p-6;
+    @apply border border-white/10;
+    @apply shadow-glass;
+    @apply transition-all duration-300;
+    background: rgba(30, 41, 59, 0.95);
+  }
+
+  .dark .card {
+    background: rgba(15, 23, 42, 0.95);
+  }
+
+  .card:hover {
+    @apply shadow-glass-lg;
+    @apply border-white/20;
+  }
+
+  /* Button styles */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply px-5 py-3 rounded-xl;
+    @apply font-medium text-sm;
+    @apply transition-all duration-200;
+    @apply transform active:scale-95;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+  }
+
+  .btn-primary {
+    @apply btn;
+    @apply bg-gradient-to-r from-blue-500 to-blue-600;
+    @apply hover:from-blue-600 hover:to-blue-700;
+    @apply text-white shadow-lg shadow-blue-500/30;
+  }
+
+  .btn-secondary {
+    @apply btn;
+    @apply bg-white/20 hover:bg-white/30;
+    @apply dark:bg-white/10 dark:hover:bg-white/20;
+    @apply border border-white/20;
+    @apply text-white;
+  }
+
+  .btn-ghost {
+    @apply btn;
+    @apply bg-transparent hover:bg-white/10;
+    @apply text-white/80 hover:text-white;
+  }
+
+  /* Input styles */
+  .input {
+    @apply w-full px-4 py-3 rounded-xl;
+    @apply bg-white/20 dark:bg-white/10;
+    @apply border border-white/20 dark:border-white/10;
+    @apply text-white placeholder:text-white/50;
+    @apply outline-none;
+    @apply transition-all duration-200;
+    @apply focus:ring-2 focus:ring-white/40 focus:border-transparent;
+  }
+
+  /* Badge/Chip styles */
+  .badge {
+    @apply inline-flex items-center gap-1.5;
+    @apply px-3 py-1 rounded-full;
+    @apply text-xs font-medium;
+    @apply bg-white/20 dark:bg-white/10;
+    @apply border border-white/10;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-pulse bg-white/20 dark:bg-white/10 rounded-lg;
+  }
+}
+
+/* =============================================
+   UTILITY STYLES
+   ============================================= */
+
+@layer utilities {
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-white to-white/80;
+  }
+
+  /* Glow effects */
+  .glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+
+  .glow-yellow {
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.5);
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Safe area padding for mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Backdrop saturation for richer colors */
+  .backdrop-saturate {
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+  }
+}
+
+/* =============================================
+   ANIMATIONS
+   ============================================= */
+
+/* Scale transition */
+.scale-enter-active,
+.scale-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scale-enter-from,
+.scale-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* =============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================= */
+
+@media (max-width: 640px) {
+  .card {
+    @apply rounded-2xl p-4;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
