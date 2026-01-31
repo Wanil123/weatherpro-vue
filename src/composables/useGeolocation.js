@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { useNotificationStore } from '../stores/notifications'
+import { useI18n } from '../i18n/useI18n'
 
 export function useGeolocation() {
   const loading = ref(false)
@@ -10,16 +11,14 @@ export function useGeolocation() {
   }
 
   function getCoords({ silent = false } = {}) {
+    const { t } = useI18n()
+
     return new Promise(resolve => {
-      // Vérifier si la géolocalisation est disponible
       if (!('geolocation' in navigator)) {
         if (!silent) {
-          getNotifications().warning(
-            'Votre navigateur ne supporte pas la géolocalisation.',
-            'Non disponible'
-          )
+          getNotifications().warning(t('geoNotSupported'), t('geoNotSupportedTitle'))
         }
-        error.value = 'Géolocalisation non disponible'
+        error.value = 'Geolocation not available'
         return resolve(null)
       }
 
@@ -27,7 +26,6 @@ export function useGeolocation() {
       error.value = null
 
       navigator.geolocation.getCurrentPosition(
-        // Succès
         pos => {
           loading.value = false
           resolve({
@@ -35,27 +33,26 @@ export function useGeolocation() {
             lon: pos.coords.longitude
           })
         },
-        // Erreur
         err => {
           loading.value = false
           error.value = err.message
 
           if (!silent) {
-            let message = 'Impossible de récupérer votre position.'
-            let title = 'Erreur de localisation'
+            let message = t('geoDefaultError')
+            let title = t('geoDefaultErrorTitle')
 
             switch (err.code) {
               case err.PERMISSION_DENIED:
-                message = 'Vous avez refusé l\'accès à votre position. Activez la géolocalisation dans les paramètres.'
-                title = 'Permission refusée'
+                message = t('geoPermissionDenied')
+                title = t('geoPermissionDeniedTitle')
                 break
               case err.POSITION_UNAVAILABLE:
-                message = 'Position indisponible. Vérifiez que le GPS est activé.'
-                title = 'Position indisponible'
+                message = t('geoPositionUnavailable')
+                title = t('geoPositionUnavailableTitle')
                 break
               case err.TIMEOUT:
-                message = 'La demande de localisation a expiré. Réessayez.'
-                title = 'Délai dépassé'
+                message = t('geoTimeout')
+                title = t('geoTimeoutTitle')
                 break
             }
 
@@ -64,11 +61,10 @@ export function useGeolocation() {
 
           resolve(null)
         },
-        // Options
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 300000 // Cache la position pendant 5 minutes
+          maximumAge: 300000
         }
       )
     })

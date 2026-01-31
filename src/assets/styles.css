@@ -3,205 +3,179 @@
 @tailwind utilities;
 
 /* =============================================
-   BASE STYLES
+   NEW DESIGN SYSTEM 2026 - Dark Luxury Theme
    ============================================= */
 
 @layer base {
-  /* Selection styling */
   ::selection {
-    background-color: rgba(59, 130, 246, 0.3);
+    background-color: rgba(14, 165, 233, 0.3);
     color: inherit;
   }
 
-  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
 
-  /* Focus visible styling */
   :focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline: 2px solid rgba(14, 165, 233, 0.5);
     outline-offset: 2px;
   }
 
-  /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
-  }
-
-  /* Dark mode scrollbar */
-  .dark ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-  }
-
-  .dark ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.25);
   }
 }
 
-/* =============================================
-   COMPONENT STYLES
-   ============================================= */
-
 @layer components {
-  /* Glassmorphism Card - fond opaque pour bloquer les effets derrière */
+  /* ===== NEW GLASS CARD ===== */
   .glass {
-    background: rgba(30, 41, 59, 0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  .dark .glass {
-    background: rgba(15, 23, 42, 0.95);
-    border-color: rgba(255, 255, 255, 0.08);
-  }
-
-  /* Card component - fond opaque */
   .card {
-    @apply rounded-3xl p-5 md:p-6;
-    @apply border border-white/10;
-    @apply shadow-glass;
-    @apply transition-all duration-300;
-    background: rgba(30, 41, 59, 0.95);
-  }
-
-  .dark .card {
-    background: rgba(15, 23, 42, 0.95);
+    @apply rounded-2xl p-5 md:p-6;
+    @apply transition-all duration-500 ease-out;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
   }
 
   .card:hover {
-    @apply shadow-glass-lg;
-    @apply border-white/20;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 40px rgba(14, 165, 233, 0.03);
   }
 
-  /* Button styles */
+  /* ===== BUTTONS ===== */
   .btn {
     @apply inline-flex items-center justify-center gap-2;
     @apply px-5 py-3 rounded-xl;
     @apply font-medium text-sm;
-    @apply transition-all duration-200;
+    @apply transition-all duration-300;
     @apply transform active:scale-95;
-    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+    @apply disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none;
   }
 
   .btn-primary {
-    @apply btn;
-    @apply bg-gradient-to-r from-blue-500 to-blue-600;
-    @apply hover:from-blue-600 hover:to-blue-700;
-    @apply text-white shadow-lg shadow-blue-500/30;
+    @apply btn text-white;
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    box-shadow: 0 4px 20px rgba(14, 165, 233, 0.25);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 8px 30px rgba(14, 165, 233, 0.35);
+    transform: translateY(-1px);
   }
 
   .btn-secondary {
-    @apply btn;
-    @apply bg-white/20 hover:bg-white/30;
-    @apply dark:bg-white/10 dark:hover:bg-white/20;
-    @apply border border-white/20;
-    @apply text-white;
+    @apply btn text-white/90;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 
   .btn-ghost {
     @apply btn;
-    @apply bg-transparent hover:bg-white/10;
-    @apply text-white/80 hover:text-white;
+    @apply bg-transparent hover:bg-white/5;
+    @apply text-white/70 hover:text-white;
   }
 
-  /* Input styles */
+  /* ===== INPUT ===== */
   .input {
     @apply w-full px-4 py-3 rounded-xl;
-    @apply bg-white/20 dark:bg-white/10;
-    @apply border border-white/20 dark:border-white/10;
-    @apply text-white placeholder:text-white/50;
+    @apply text-white placeholder:text-white/30;
     @apply outline-none;
-    @apply transition-all duration-200;
-    @apply focus:ring-2 focus:ring-white/40 focus:border-transparent;
+    @apply transition-all duration-300;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  /* Badge/Chip styles */
+  .input:focus {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(14, 165, 233, 0.3);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  }
+
   .badge {
     @apply inline-flex items-center gap-1.5;
     @apply px-3 py-1 rounded-full;
     @apply text-xs font-medium;
-    @apply bg-white/20 dark:bg-white/10;
-    @apply border border-white/10;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  /* Skeleton loader */
   .skeleton {
-    @apply animate-pulse bg-white/20 dark:bg-white/10 rounded-lg;
+    @apply animate-pulse rounded-xl;
+    background: rgba(255, 255, 255, 0.05);
   }
 }
-
-/* =============================================
-   UTILITY STYLES
-   ============================================= */
 
 @layer utilities {
-  /* Text gradient */
-  .text-gradient {
+  .text-gradient-brand {
     @apply bg-clip-text text-transparent;
-    @apply bg-gradient-to-r from-white to-white/80;
+    background-image: linear-gradient(135deg, #0ea5e9, #a78bfa, #f472b6);
   }
 
-  /* Glow effects */
-  .glow {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  .text-gradient-warm {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #f59e0b, #ef4444);
   }
 
-  .glow-yellow {
-    box-shadow: 0 0 20px rgba(234, 179, 8, 0.5);
+  .text-gradient-cool {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #06b6d4, #3b82f6);
   }
 
-  /* Hide scrollbar but keep functionality */
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  .border-gradient {
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    position: relative;
   }
 
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  .border-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(167, 139, 250, 0.3), rgba(244, 114, 182, 0.1));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 
-  /* Safe area padding for mobile */
-  .safe-top {
-    padding-top: env(safe-area-inset-top);
-  }
-
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  /* Backdrop saturation for richer colors */
-  .backdrop-saturate {
-    backdrop-filter: saturate(180%) blur(12px);
-    -webkit-backdrop-filter: saturate(180%) blur(12px);
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
   }
 }
 
 /* =============================================
-   ANIMATIONS
+   TRANSITIONS
    ============================================= */
 
-/* Scale transition */
 .scale-enter-active,
 .scale-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -214,16 +188,15 @@
 }
 
 /* =============================================
-   RESPONSIVE ADJUSTMENTS
+   RESPONSIVE
    ============================================= */
 
 @media (max-width: 640px) {
   .card {
-    @apply rounded-2xl p-4;
+    @apply rounded-xl p-4;
   }
 }
 
-/* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
