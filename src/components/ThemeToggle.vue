@@ -6,26 +6,22 @@
     :aria-checked="modelValue"
     aria-label="Basculer entre mode clair et sombre"
   >
-    <!-- Fond du toggle -->
-    <span class="toggle-track">
-      <!-- Étoiles/soleil en arrière-plan -->
-      <span class="toggle-bg-icons">
-        <span class="star star-1">*</span>
-        <span class="star star-2">*</span>
-        <span class="star star-3">*</span>
+    <span class="toggle-track" :class="modelValue ? 'track-dark' : 'track-light'">
+      <!-- Stars background for dark mode -->
+      <span class="toggle-stars" :class="modelValue ? 'opacity-100' : 'opacity-0'">
+        <span class="star" style="top: 4px; left: 8px; animation-delay: 0s;" />
+        <span class="star" style="top: 14px; left: 16px; animation-delay: 0.5s;" />
+        <span class="star" style="bottom: 4px; left: 12px; animation-delay: 1s;" />
       </span>
 
-      <!-- Cercle du toggle -->
+      <!-- Thumb -->
       <span
-        :class="[
-          'toggle-thumb',
-          modelValue ? 'translate-x-6' : 'translate-x-0'
-        ]"
+        class="toggle-thumb"
+        :class="modelValue ? 'translate-x-6' : 'translate-x-0'"
       >
-        <!-- Icône soleil/lune -->
         <svg
           v-if="!modelValue"
-          class="w-4 h-4 text-yellow-500"
+          class="w-3.5 h-3.5 text-amber-500"
           fill="currentColor"
           viewBox="0 0 24 24"
         >
@@ -33,7 +29,7 @@
         </svg>
         <svg
           v-else
-          class="w-4 h-4 text-slate-700"
+          class="w-3.5 h-3.5 text-slate-300"
           fill="currentColor"
           viewBox="0 0 24 24"
         >
@@ -58,54 +54,73 @@ function toggle() {
 
 <style scoped>
 .theme-toggle {
-  @apply relative inline-flex items-center p-1 rounded-full
-         focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50
-         transition-all duration-300;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 9999px;
+  outline: none;
+  transition: all 0.3s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.theme-toggle:focus-visible {
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.4);
 }
 
 .toggle-track {
-  @apply relative w-14 h-8 rounded-full overflow-hidden
-         bg-gradient-to-r from-blue-900 to-indigo-900
-         transition-all duration-500;
+  position: relative;
+  width: 3.25rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.theme-toggle[aria-checked="false"] .toggle-track {
-  @apply from-sky-400 to-blue-500;
+.track-dark {
+  background: linear-gradient(135deg, #0c1445, #1a0a3e);
+  border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
-.toggle-bg-icons {
-  @apply absolute inset-0 flex items-center justify-center;
+.track-light {
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.toggle-stars {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.5s ease;
 }
 
 .star {
-  @apply absolute text-white/60 text-xs transition-all duration-500;
-}
-
-.star-1 { @apply top-1 left-2; }
-.star-2 { @apply top-3 left-4; }
-.star-3 { @apply bottom-1 left-3; }
-
-.theme-toggle[aria-checked="false"] .star {
-  @apply opacity-0 scale-0;
-}
-
-.theme-toggle[aria-checked="true"] .star {
-  @apply opacity-100 scale-100;
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
   animation: twinkle 2s ease-in-out infinite;
 }
 
-.star-2 { animation-delay: 0.5s; }
-.star-3 { animation-delay: 1s; }
-
 .toggle-thumb {
-  @apply absolute top-1 left-1 w-6 h-6 rounded-full
-         bg-white shadow-lg
-         flex items-center justify-center
-         transition-transform duration-300 ease-out;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes twinkle {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.2); }
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
 }
 </style>

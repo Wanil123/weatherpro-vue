@@ -1,38 +1,35 @@
 <template>
-  <div
-    class="weather-bg fixed inset-0 overflow-hidden transition-all duration-700"
-    :class="bgClass"
-    aria-hidden="true"
-  >
-    <!-- Overlay gradient -->
-    <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+  <div class="weather-bg fixed inset-0 overflow-hidden" aria-hidden="true">
+    <!-- Base gradient -->
+    <div class="absolute inset-0 transition-all duration-1000" :class="bgClass" />
 
-    <!-- Effets selon le thème - SIMPLIFIÉS pour performance -->
-    <div class="effects-container absolute inset-0 pointer-events-none overflow-hidden">
+    <!-- Mesh gradient overlay -->
+    <div class="mesh-gradient absolute inset-0 opacity-40" />
 
-      <!-- Soleil (jour clair) -->
+    <!-- Noise texture -->
+    <div class="noise absolute inset-0 opacity-[0.015]" />
+
+    <!-- Floating orbs -->
+    <div class="orb orb-1 transition-all duration-1000" :class="orbColor" />
+    <div class="orb orb-2 transition-all duration-1000" :class="orbColor2" />
+
+    <!-- Vignette -->
+    <div class="absolute inset-0 bg-gradient-to-t from-[#050510]/60 via-transparent to-[#050510]/30" />
+
+    <!-- Weather CSS effects -->
+    <div class="effects absolute inset-0 pointer-events-none overflow-hidden">
       <div v-if="theme === 'Clear'" class="sun" />
-
-      <!-- Nuages -->
       <template v-if="theme === 'Clouds'">
         <div class="cloud cloud-1" />
         <div class="cloud cloud-2" />
         <div class="cloud cloud-3" />
       </template>
-
-      <!-- Pluie - CSS only -->
       <div v-if="theme === 'Rain'" class="rain-effect" />
-
-      <!-- Neige - CSS only -->
       <div v-if="theme === 'Snow'" class="snow-effect" />
-
-      <!-- Orage -->
       <template v-if="theme === 'Thunderstorm'">
         <div class="lightning-effect" />
         <div class="rain-effect rain-heavy" />
       </template>
-
-      <!-- Nuit -->
       <template v-if="theme === 'Night'">
         <div class="stars-effect" />
         <div class="moon" />
@@ -49,167 +46,143 @@ const props = defineProps({
 })
 
 const bgClass = computed(() => {
-  const gradients = {
-    Clear: 'bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500',
-    Clouds: 'bg-gradient-to-br from-slate-400 via-slate-500 to-slate-600',
-    Rain: 'bg-gradient-to-br from-slate-600 via-blue-700 to-slate-800',
-    Snow: 'bg-gradient-to-br from-slate-300 via-blue-200 to-slate-400',
-    Thunderstorm: 'bg-gradient-to-br from-slate-800 via-purple-900 to-slate-900',
-    Night: 'bg-gradient-to-br from-slate-900 via-indigo-950 to-black'
+  const map = {
+    Clear: 'bg-gradient-to-br from-[#0c1445] via-[#1a0a3e] to-[#0d1117]',
+    Clouds: 'bg-gradient-to-br from-[#0d1117] via-[#161b22] to-[#0d1117]',
+    Rain: 'bg-gradient-to-br from-[#030712] via-[#0c1a3a] to-[#0d1117]',
+    Snow: 'bg-gradient-to-br from-[#0d1525] via-[#121d33] to-[#0a1020]',
+    Thunderstorm: 'bg-gradient-to-br from-[#0a0010] via-[#150020] to-[#050510]',
+    Night: 'bg-gradient-to-br from-[#050510] via-[#0a0a2e] to-[#030308]'
   }
-  return gradients[props.theme] || gradients.Clear
+  return map[props.theme] || map.Clear
+})
+
+const orbColor = computed(() => {
+  const map = {
+    Clear: 'orb-amber', Clouds: 'orb-slate', Rain: 'orb-blue',
+    Snow: 'orb-cyan', Thunderstorm: 'orb-purple', Night: 'orb-indigo'
+  }
+  return map[props.theme] || 'orb-amber'
+})
+
+const orbColor2 = computed(() => {
+  const map = {
+    Clear: 'orb-rose', Clouds: 'orb-blue-dim', Rain: 'orb-indigo',
+    Snow: 'orb-blue', Thunderstorm: 'orb-rose', Night: 'orb-purple'
+  }
+  return map[props.theme] || 'orb-rose'
 })
 </script>
 
 <style scoped>
-/* ===== CONTENEUR PRINCIPAL ===== */
-.weather-bg {
-  z-index: -50;
-  isolation: isolate;
+.weather-bg { z-index: -50; isolation: isolate; }
+
+.mesh-gradient {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(167, 139, 250, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(244, 114, 182, 0.04) 0%, transparent 50%);
 }
 
-.effects-container {
-  z-index: -40;
+.noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
 }
 
-/* ===== SOLEIL ===== */
-.sun {
+.orb {
   position: absolute;
-  top: -80px;
-  right: -80px;
-  width: 200px;
-  height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,220,100,0.8) 0%, rgba(255,180,50,0.4) 50%, transparent 70%);
-  filter: blur(10px);
-  animation: pulse-sun 4s ease-in-out infinite;
+  filter: blur(80px);
+  animation: float-orb 15s ease-in-out infinite;
+}
+.orb-1 { width: 500px; height: 500px; top: -150px; right: -100px; }
+.orb-2 { width: 400px; height: 400px; bottom: -100px; left: -100px; animation-delay: -7s; animation-direction: reverse; }
+
+.orb-amber { background: rgba(245, 158, 11, 0.12); }
+.orb-rose { background: rgba(244, 114, 182, 0.08); }
+.orb-blue { background: rgba(59, 130, 246, 0.1); }
+.orb-blue-dim { background: rgba(59, 130, 246, 0.05); }
+.orb-cyan { background: rgba(6, 182, 212, 0.1); }
+.orb-purple { background: rgba(139, 92, 246, 0.12); }
+.orb-indigo { background: rgba(99, 102, 241, 0.1); }
+.orb-slate { background: rgba(148, 163, 184, 0.06); }
+
+@keyframes float-orb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
 }
 
-@keyframes pulse-sun {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.1); opacity: 1; }
-}
-
-/* ===== NUAGES ===== */
-.cloud {
-  position: absolute;
-  width: 200px;
-  height: 60px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 100px;
+.sun {
+  position: absolute; top: -100px; right: -100px;
+  width: 250px; height: 250px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,158,11,0.3) 0%, rgba(245,158,11,0.1) 40%, transparent 70%);
   filter: blur(20px);
+  animation: pulse-sun 6s ease-in-out infinite;
+}
+@keyframes pulse-sun {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.cloud {
+  position: absolute; width: 250px; height: 60px;
+  background: rgba(255,255,255,0.03); border-radius: 100px; filter: blur(30px);
   animation: float-cloud linear infinite;
 }
-
-.cloud-1 {
-  top: 10%;
-  animation-duration: 40s;
-}
-
-.cloud-2 {
-  top: 30%;
-  width: 250px;
-  animation-duration: 50s;
-  animation-delay: -15s;
-}
-
-.cloud-3 {
-  top: 50%;
-  width: 180px;
-  animation-duration: 35s;
-  animation-delay: -25s;
-}
-
+.cloud-1 { top: 10%; animation-duration: 45s; }
+.cloud-2 { top: 35%; width: 300px; animation-duration: 55s; animation-delay: -20s; }
+.cloud-3 { top: 55%; width: 200px; animation-duration: 38s; animation-delay: -30s; }
 @keyframes float-cloud {
-  from { transform: translateX(-250px); }
-  to { transform: translateX(calc(100vw + 250px)); }
+  from { transform: translateX(-300px); }
+  to { transform: translateX(calc(100vw + 300px)); }
 }
 
-/* ===== PLUIE (CSS Pure) ===== */
 .rain-effect {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(transparent 0%, rgba(150,200,255,0.3) 50%, transparent 100%);
-  background-size: 2px 20px;
-  background-repeat: repeat;
-  animation: rain-fall 0.8s linear infinite;
-  opacity: 0.5;
+  position: absolute; inset: 0;
+  background-image: linear-gradient(transparent 0%, rgba(100,160,255,0.15) 50%, transparent 100%);
+  background-size: 1px 25px; background-repeat: repeat;
+  animation: rain-fall 0.7s linear infinite; opacity: 0.4;
 }
+.rain-heavy { animation-duration: 0.4s; opacity: 0.6; }
+@keyframes rain-fall { from { background-position: 0 -25px; } to { background-position: 0 25px; } }
 
-.rain-heavy {
-  animation-duration: 0.5s;
-  opacity: 0.7;
-}
-
-@keyframes rain-fall {
-  from { background-position: 0 -20px; }
-  to { background-position: 0 20px; }
-}
-
-/* ===== NEIGE (CSS Pure) ===== */
 .snow-effect {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background-image:
-    radial-gradient(circle, white 1px, transparent 1px),
-    radial-gradient(circle, white 1px, transparent 1px),
-    radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px);
-  background-size: 50px 50px, 80px 80px, 100px 100px;
-  background-position: 0 0, 25px 25px, 50px 10px;
-  animation: snow-fall 8s linear infinite;
-  opacity: 0.6;
+    radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px);
+  background-size: 60px 60px, 90px 90px, 120px 120px;
+  animation: snow-fall 10s linear infinite; opacity: 0.5;
 }
-
 @keyframes snow-fall {
   from { background-position: 0 0, 25px 25px, 50px 10px; }
-  to { background-position: 50px 100px, 75px 125px, 100px 110px; }
+  to { background-position: 60px 120px, 85px 145px, 110px 130px; }
 }
 
-/* ===== ÉCLAIR ===== */
-.lightning-effect {
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  animation: lightning 5s ease-in-out infinite;
-}
-
+.lightning-effect { position: absolute; inset: 0; animation: lightning 6s ease-in-out infinite; }
 @keyframes lightning {
   0%, 89%, 91%, 93%, 95%, 100% { background: transparent; }
-  90% { background: rgba(255,255,255,0.6); }
-  92% { background: rgba(255,255,255,0.3); }
-  94% { background: rgba(255,255,255,0.5); }
+  90% { background: rgba(167,139,250,0.15); }
+  92% { background: rgba(167,139,250,0.08); }
+  94% { background: rgba(167,139,250,0.12); }
 }
 
-/* ===== ÉTOILES (CSS Pure) ===== */
 .stars-effect {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background-image:
-    radial-gradient(circle, white 1px, transparent 1px),
     radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px),
-    radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px);
-  background-size: 100px 100px, 150px 150px, 200px 200px;
-  background-position: 0 0, 50px 50px, 25px 75px;
-  animation: twinkle-stars 4s ease-in-out infinite alternate;
+    radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px);
+  background-size: 120px 120px, 170px 170px, 230px 230px;
+  animation: twinkle 5s ease-in-out infinite alternate;
 }
+@keyframes twinkle { from { opacity: 0.3; } to { opacity: 0.7; } }
 
-@keyframes twinkle-stars {
-  from { opacity: 0.4; }
-  to { opacity: 0.8; }
-}
-
-/* ===== LUNE ===== */
 .moon {
-  position: absolute;
-  top: 40px;
-  right: 60px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f8f8f8 0%, #ddd 100%);
-  box-shadow:
-    inset -10px -10px 20px rgba(0,0,0,0.1),
-    0 0 40px rgba(255,255,255,0.3);
+  position: absolute; top: 50px; right: 80px; width: 70px; height: 70px; border-radius: 50%;
+  background: linear-gradient(135deg, #e8e8e8, #b8b8b8);
+  box-shadow: inset -8px -8px 16px rgba(0,0,0,0.15), 0 0 50px rgba(255,255,255,0.1), 0 0 100px rgba(167,139,250,0.05);
 }
 </style>

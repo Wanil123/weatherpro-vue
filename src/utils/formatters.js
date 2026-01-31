@@ -1,15 +1,16 @@
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
+import 'dayjs/locale/en'
 import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
-dayjs.locale('fr')
 
 function toLocal(ts, tzSec) {
   return dayjs.unix(ts).utcOffset(tzSec / 60).format('HH:mm')
 }
 
-export function formatCurrent(raw) {
+export function formatCurrent(raw, lang = 'fr') {
+  dayjs.locale(lang)
   const tz = raw.timezone || 0
   const isNight = raw.weather?.[0]?.icon?.includes('n')
   return {
@@ -20,7 +21,7 @@ export function formatCurrent(raw) {
     description: raw.weather?.[0]?.description,
     icon: raw.weather?.[0]?.icon,
     humidity: raw.main?.humidity,
-    windSpeed: (raw.wind?.speed || 0) * 3.6, // m/s → km/h
+    windSpeed: (raw.wind?.speed || 0) * 3.6,
     pressure: raw.main?.pressure,
     visibility: Math.round((raw.visibility || 0) / 1000),
     uvIndex: null,
@@ -33,7 +34,8 @@ export function formatCurrent(raw) {
   }
 }
 
-export function formatForecastList(raw) {
+export function formatForecastList(raw, lang = 'fr') {
+  dayjs.locale(lang)
   const byDay = {}
   for (const it of raw.list || []) {
     const d = it.dt_txt.split(' ')[0]
@@ -45,7 +47,9 @@ export function formatForecastList(raw) {
     const min = Math.min(...temps)
     const max = Math.max(...temps)
     const icons = arr.map(x => x.weather?.[0]?.icon)
-    const icon = icons.sort((a,b) => icons.filter(v=>v===a).length - icons.filter(v=>v===b).length).pop()
+    const freq = {}
+    for (const ic of icons) { freq[ic] = (freq[ic] || 0) + 1 }
+    const icon = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || '01d'
     const desc = arr[Math.floor(arr.length/2)]?.weather?.[0]?.description || ''
     const pop = Math.round(100 * (arr.reduce((s, x) => s + (x.pop || 0), 0) / arr.length))
 

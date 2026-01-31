@@ -1,105 +1,112 @@
 <template>
-  <!-- Fond animé dynamique -->
+  <!-- Background layers -->
   <WeatherBackground :theme="themeKey" />
-
-  <!-- Notifications Toast -->
+  <ParticleCanvas :theme="themeKey" :mouseX="mouseX" :mouseY="mouseY" />
   <ToastNotifications />
 
-  <main class="min-h-screen relative z-10">
-    <div class="max-w-6xl mx-auto px-4 py-6 md:py-10">
+  <main class="min-h-screen min-h-[100dvh] relative z-10" @mousemove="onMouseMove">
+    <div class="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8 md:py-12">
+
       <!-- Header -->
-      <header class="flex items-center justify-between mb-8">
-        <div class="flex items-center gap-3">
-          <!-- Logo animé -->
-          <div class="relative">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-              <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+      <header class="flex items-center justify-between mb-6 sm:mb-10">
+        <div class="flex items-center gap-3 sm:gap-4">
+          <div class="relative logo-float">
+            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center border-gradient"
+                 style="background: rgba(255,255,255,0.04);">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
               </svg>
             </div>
-            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
+            <div class="absolute -bottom-0.5 -right-0.5 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-400 rounded-full ring-2 ring-[#050510]" />
           </div>
           <div>
-            <h1 class="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-              WeatherPro
+            <h1 class="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-gradient-brand">
+              {{ t('appTitle') }}
             </h1>
-            <p class="text-xs text-white/50 hidden sm:block">Météo en temps réel</p>
+            <p class="text-[10px] sm:text-[11px] text-white/30 tracking-wider uppercase hidden sm:block">{{ t('appSubtitle') }}</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <ThemeToggle v-model="dark" @update:model-value="toggleTheme" />
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Language toggle -->
+          <button
+            @click="toggleLang"
+            class="lang-toggle"
+            :aria-label="lang === 'fr' ? 'Switch to English' : 'Passer en français'"
+          >
+            <span class="lang-flag">{{ lang === 'fr' ? '🇫🇷' : '🇬🇧' }}</span>
+            <span class="lang-code">{{ t('langLabel') }}</span>
+          </button>
+
         </div>
       </header>
 
-      <!-- Contenu principal -->
-      <div class="space-y-6">
-        <!-- Barre de recherche -->
-        <SearchBar
-          :loading="loading"
-          @search="handleSearch"
-          @geolocate="searchCurrentLocation"
-        />
+      <!-- Content -->
+      <div class="space-y-5 sm:space-y-8">
 
-        <!-- Skeleton loaders pendant le chargement initial -->
+        <!-- Search -->
+        <SearchBar :loading="loading" @search="handleSearch" @geolocate="searchCurrentLocation" />
+
+        <!-- Greeting -->
+        <Transition name="slide-fade" mode="out-in">
+          <WeatherGreeting
+            v-if="current"
+            :key="current.city + lang"
+            :city="current.city"
+            :isNight="current.isNight"
+            :temperature="current.temperature"
+          />
+        </Transition>
+
+        <!-- Skeletons -->
         <template v-if="loading && !current">
-          <div class="grid md:grid-cols-2 gap-4 md:gap-6">
+          <div class="grid md:grid-cols-2 gap-4 sm:gap-5">
             <SkeletonLoader type="current" />
             <SkeletonLoader type="details" />
           </div>
           <SkeletonLoader type="forecast" />
         </template>
 
-        <!-- Contenu météo -->
+        <!-- Weather data -->
         <template v-else>
           <Transition name="slide-fade" mode="out-in">
-            <div v-if="current" class="grid md:grid-cols-2 gap-4 md:gap-6">
+            <div v-if="current" :key="current.city + '-main'" class="grid md:grid-cols-2 gap-4 sm:gap-5">
               <CurrentWeather :data="current" />
               <WeatherDetails :data="current" />
             </div>
           </Transition>
 
           <Transition name="slide-fade" mode="out-in">
-            <ForecastList v-if="forecast.length" :items="forecast" />
+            <ForecastList v-if="forecast.length" :key="current?.city + '-forecast'" :items="forecast" />
           </Transition>
         </template>
 
-        <!-- Panneaux favoris et historique -->
-        <div class="grid md:grid-cols-2 gap-4">
+        <!-- Favorites & History -->
+        <div class="grid md:grid-cols-2 gap-4 sm:gap-5">
           <FavoritesPanel @select="handleSearch" />
-          <SearchHistory
-            :items="history"
-            @select="handleSearch"
-            @clear="clearHistory"
-          />
+          <SearchHistory :items="history" @select="handleSearch" @clear="clearHistory" />
         </div>
       </div>
 
       <!-- Footer -->
-      <footer class="mt-12 pt-6 border-t border-white/10 text-center">
-        <p class="text-sm text-white/40">
-          Données fournies par
-          <a
-            href="https://openweathermap.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-white/60 hover:text-white underline-offset-2 hover:underline transition-colors"
-          >
+      <footer class="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-white/5 text-center">
+        <p class="text-[10px] sm:text-xs text-white/25">
+          {{ t('footerData') }}
+          <a href="https://openweathermap.org/" target="_blank" rel="noopener noreferrer"
+             class="text-white/40 hover:text-sky-400 transition-colors duration-300">
             OpenWeatherMap
           </a>
+          · {{ t('footerBuilt') }}
         </p>
       </footer>
     </div>
 
-    <!-- Loading overlay -->
     <LoadingSpinner v-if="loading && current" />
   </main>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-
-// Composants
 import SearchBar from './components/SearchBar.vue'
 import CurrentWeather from './components/CurrentWeather.vue'
 import ForecastList from './components/ForecastList.vue'
@@ -109,36 +116,32 @@ import FavoritesPanel from './components/FavoritesPanel.vue'
 import LoadingSpinner from './components/LoadingSpinner.vue'
 import SkeletonLoader from './components/SkeletonLoader.vue'
 import WeatherBackground from './components/WeatherBackground.vue'
-import ThemeToggle from './components/ThemeToggle.vue'
 import ToastNotifications from './components/ToastNotifications.vue'
-
-// Composables
+import ParticleCanvas from './components/ParticleCanvas.vue'
+import WeatherGreeting from './components/WeatherGreeting.vue'
 import { useWeather } from './composables/useWeather'
 import { useGeolocation } from './composables/useGeolocation'
 import { useLocalStorage } from './composables/useLocalStorage'
-
-// Utils
 import { themeFromCondition } from './utils/themes'
+import { useI18n } from './i18n/useI18n'
 
-// Constants
 const DEFAULT_CITY = 'Montréal, CA'
 
-// State
+const { t, lang, toggleLang } = useI18n()
 const { current, forecast, fetchByCity, fetchByCoords, loading } = useWeather()
 const { getCoords } = useGeolocation()
 const { value: history, push: pushHistory, clear: clearHistory } = useLocalStorage('wp_history', [])
-const { value: dark, set: setDark } = useLocalStorage('wp_dark', true)
 
-// Computed
+const mouseX = ref(0)
+const mouseY = ref(0)
+function onMouseMove(e) {
+  mouseX.value = e.clientX
+  mouseY.value = e.clientY
+}
+
 const themeKey = computed(() =>
   themeFromCondition(current.value?.main ?? 'Clear', current.value?.isNight)
 )
-
-// Methods
-function toggleTheme(val) {
-  setDark(val)
-  document.documentElement.classList.toggle('dark', val)
-}
 
 async function handleSearch(city) {
   if (!city?.trim()) return
@@ -152,12 +155,14 @@ async function searchCurrentLocation() {
   await fetchByCoords(coords.lat, coords.lon)
 }
 
-// Lifecycle
-onMounted(async () => {
-  // Appliquer le thème initial
-  document.documentElement.classList.toggle('dark', !!dark.value)
+// Re-fetch weather data when language changes (to get translated descriptions from API)
+watch(lang, async () => {
+  if (current.value?.city) {
+    await fetchByCity(`${current.value.city}, ${current.value.country}`)
+  }
+})
 
-  // Essayer la géolocalisation, sinon charger la ville par défaut
+onMounted(async () => {
   const coords = await getCoords({ silent: true })
   if (coords) {
     await fetchByCoords(coords.lat, coords.lon)
@@ -166,44 +171,55 @@ onMounted(async () => {
   }
 })
 
-// Mettre à jour le titre de la page selon la ville
 watch(current, (val) => {
-  if (val?.city) {
-    document.title = `${val.city} - WeatherPro`
-  } else {
-    document.title = 'WeatherPro'
-  }
+  document.title = val?.city ? `${val.city} - WeatherPro` : 'WeatherPro'
 })
 </script>
 
 <style>
-/* Animations de transition */
-.slide-fade-enter-active {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.slide-fade-enter-active { transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+.slide-fade-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.slide-fade-enter-from { opacity: 0; transform: translateY(24px); }
+.slide-fade-leave-to { opacity: 0; transform: translateY(-12px); }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.25s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.logo-float { animation: logo-float 4s ease-in-out infinite; }
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
-.slide-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.625rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.slide-fade-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
+.lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: white;
 }
 
-.slide-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
+.lang-flag {
+  font-size: 0.875rem;
+  line-height: 1;
 }
 
-/* Fade simple */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.lang-code {
+  font-weight: 600;
+  font-size: 0.625rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 </style>

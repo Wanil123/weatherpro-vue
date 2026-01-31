@@ -1,42 +1,51 @@
 <template>
   <article
-    class="card glass"
+    ref="detailsRef"
+    class="details-card"
+    :style="tiltStyle"
     role="region"
-    aria-label="Détails météo"
+    :aria-label="t('detailsAria')"
   >
-    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-      <svg class="w-5 h-5 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    <h3 class="text-xs sm:text-sm font-semibold mb-4 sm:mb-5 flex items-center gap-2 text-white/50 uppercase tracking-wider">
+      <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-400/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
-      Détails
+      {{ t('detailsTitle') }}
     </h3>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-2.5">
       <div
-        v-for="detail in details"
+        v-for="(detail, index) in details"
         :key="detail.label"
-        class="detail-card group"
+        class="detail-item group"
+        :style="{ animationDelay: `${index * 50}ms` }"
       >
-        <div class="flex items-center gap-2 mb-2">
-          <div class="p-1.5 rounded-lg bg-white/10 group-hover:bg-white/20 transition-colors flex-shrink-0">
-            <component :is="detail.icon" class="w-4 h-4 text-white/80" />
+        <div class="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+          <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300"
+               :style="`background: ${detail.color}15; border: 1px solid ${detail.color}20;`">
+            <component :is="detail.icon" class="w-3 h-3 sm:w-3.5 sm:h-3.5" :style="`color: ${detail.color}`" />
           </div>
-          <span class="text-[10px] font-medium text-white/60 uppercase tracking-wide truncate">{{ detail.label }}</span>
+          <span class="text-[9px] sm:text-[10px] font-medium text-white/35 uppercase tracking-wider truncate">{{ detail.label }}</span>
         </div>
-        <div class="text-xl font-bold">{{ detail.value }}</div>
+        <div class="text-base sm:text-lg font-bold text-white/90 font-mono">{{ detail.value }}</div>
       </div>
     </div>
   </article>
 </template>
 
 <script setup>
-import { computed, h } from 'vue'
+import { computed, h, ref } from 'vue'
+import { useTilt } from '../composables/useTilt'
+import { useI18n } from '../i18n/useI18n'
 
 const props = defineProps({
   data: { type: Object, required: true }
 })
 
-// Icônes SVG comme composants
+const { t } = useI18n()
+const detailsRef = ref(null)
+const { tiltStyle } = useTilt(detailsRef, { maxTilt: 4, scale: 1.005 })
+
 const icons = {
   humidity: {
     render: () => h('svg', { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '2' }, [
@@ -77,54 +86,57 @@ const icons = {
 }
 
 const details = computed(() => [
-  {
-    label: 'Humidité',
-    value: `${props.data.humidity ?? '—'}%`,
-    icon: icons.humidity
-  },
-  {
-    label: 'Vent',
-    value: `${Math.round(props.data.windSpeed ?? 0)} km/h`,
-    icon: icons.wind
-  },
-  {
-    label: 'Pression',
-    value: `${props.data.pressure ?? '—'} hPa`,
-    icon: icons.pressure
-  },
-  {
-    label: 'Visibilité',
-    value: `${props.data.visibility ?? '—'} km`,
-    icon: icons.visibility
-  },
-  {
-    label: 'Index UV',
-    value: props.data.uvIndex ?? '—',
-    icon: icons.uv
-  },
-  {
-    label: 'Lever',
-    value: props.data.sunrise ?? '—',
-    icon: icons.sunrise
-  },
-  {
-    label: 'Coucher',
-    value: props.data.sunset ?? '—',
-    icon: icons.sunset
-  }
+  { label: t('humidity'), value: `${props.data.humidity ?? '—'}%`, icon: icons.humidity, color: '#06b6d4' },
+  { label: t('wind'), value: `${Math.round(props.data.windSpeed ?? 0)} km/h`, icon: icons.wind, color: '#8b5cf6' },
+  { label: t('pressure'), value: `${props.data.pressure ?? '—'} hPa`, icon: icons.pressure, color: '#f59e0b' },
+  { label: t('visibility'), value: `${props.data.visibility ?? '—'} km`, icon: icons.visibility, color: '#10b981' },
+  { label: t('uvIndex'), value: props.data.uvIndex ?? '—', icon: icons.uv, color: '#ef4444' },
+  { label: t('sunrise'), value: props.data.sunrise ?? '—', icon: icons.sunrise, color: '#f97316' },
+  { label: t('sunset'), value: props.data.sunset ?? '—', icon: icons.sunset, color: '#6366f1' }
 ])
 </script>
 
 <style scoped>
-.detail-card {
-  @apply p-4 rounded-2xl transition-all duration-300;
-  @apply border border-white/10 hover:border-white/20;
-  @apply transform hover:scale-[1.02];
-  @apply overflow-hidden;
-  background: rgba(51, 65, 85, 0.9);
+.details-card {
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.detail-card:hover {
-  background: rgba(71, 85, 105, 0.95);
+@media (min-width: 640px) {
+  .details-card { padding: 1.5rem; }
+}
+
+.details-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.detail-item {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.3s ease;
+  animation: detail-appear 0.4s ease-out both;
+}
+
+@media (min-width: 640px) {
+  .detail-item { padding: 0.875rem; }
+}
+
+.detail-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+@keyframes detail-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
