@@ -1,32 +1,35 @@
 <template>
-  <svg viewBox="0 0 100 100" class="w-full h-full">
+  <svg viewBox="0 0 100 100" class="w-full h-full" :role="title ? 'img' : 'presentation'" :aria-hidden="title ? null : 'true'" focusable="false">
+    <title v-if="title">{{ title }}</title>
+
     <!-- Nuage -->
     <g :class="{ 'animate-float': animated }">
       <path
-        d="M20 55 Q10 55, 10 45 Q10 35, 20 35 Q20 25, 35 25 Q40 17, 55 17 Q75 17, 75 37 Q85 37, 85 47 Q85 57, 75 57 Z"
-        class="fill-slate-400 dark:fill-slate-500"
+        d="M22 55 Q12 55, 12 45 Q12 35, 22 35 Q22 25, 36 25 Q42 17, 56 17 Q74 17, 74 37 Q84 37, 84 47 Q84 57, 74 57 Z"
+        fill="#94a3b8"
       />
     </g>
 
-    <!-- Petites gouttes de bruine -->
+    <!-- Bruine : gouttes courtes -->
     <g :class="{ 'animate-drizzle': animated }">
-      <circle cx="28" cy="68" r="2" class="fill-blue-300" />
-      <circle cx="42" cy="72" r="2" class="fill-blue-300" />
-      <circle cx="56" cy="66" r="2" class="fill-blue-300" />
-      <circle cx="70" cy="70" r="2" class="fill-blue-300" />
+      <line x1="28" y1="62" x2="26" y2="70" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" />
+      <line x1="42" y1="64" x2="40" y2="72" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" />
+      <line x1="56" y1="62" x2="54" y2="70" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" />
+      <line x1="70" y1="64" x2="68" y2="72" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" />
     </g>
 
     <g :class="{ 'animate-drizzle-delay': animated }">
-      <circle cx="35" cy="78" r="1.5" class="fill-blue-200" />
-      <circle cx="49" cy="82" r="1.5" class="fill-blue-200" />
-      <circle cx="63" cy="76" r="1.5" class="fill-blue-200" />
+      <line x1="35" y1="76" x2="33" y2="84" stroke="#bae6fd" stroke-width="1.5" stroke-linecap="round" />
+      <line x1="49" y1="78" x2="47" y2="86" stroke="#bae6fd" stroke-width="1.5" stroke-linecap="round" />
+      <line x1="63" y1="76" x2="61" y2="84" stroke="#bae6fd" stroke-width="1.5" stroke-linecap="round" />
     </g>
   </svg>
 </template>
 
 <script setup>
 defineProps({
-  animated: { type: Boolean, default: true }
+  animated: { type: Boolean, default: true },
+  title: { type: String, default: '' }
 })
 </script>
 
@@ -35,22 +38,16 @@ defineProps({
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-2px); }
 }
-
 @keyframes drizzle {
   0% { transform: translateY(-3px); opacity: 0; }
   30% { opacity: 1; }
   100% { transform: translateY(10px); opacity: 0; }
 }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-drizzle { animation: drizzle 1.5s ease-in-out infinite; }
+.animate-drizzle-delay { animation: drizzle 1.5s ease-in-out infinite 0.7s; }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-drizzle {
-  animation: drizzle 1.5s ease-in-out infinite;
-}
-
-.animate-drizzle-delay {
-  animation: drizzle 1.5s ease-in-out infinite 0.7s;
+@media (prefers-reduced-motion: reduce) {
+  .animate-float, .animate-drizzle, .animate-drizzle-delay { animation: none; }
 }
 </style>

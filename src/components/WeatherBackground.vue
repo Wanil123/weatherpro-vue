@@ -7,7 +7,7 @@
     <div class="mesh-gradient absolute inset-0 opacity-40" />
 
     <!-- Noise texture -->
-    <div class="noise absolute inset-0 opacity-[0.015]" />
+    <div class="noise absolute inset-0" />
 
     <!-- Floating orbs -->
     <div class="orb orb-1 transition-all duration-1000" :class="orbColor" />
@@ -23,6 +23,11 @@
         <div class="cloud cloud-1" />
         <div class="cloud cloud-2" />
         <div class="cloud cloud-3" />
+      </template>
+      <template v-if="theme === 'Fog'">
+        <div class="fog-band fog-1" />
+        <div class="fog-band fog-2" />
+        <div class="fog-band fog-3" />
       </template>
       <div v-if="theme === 'Rain'" class="rain-effect" />
       <div v-if="theme === 'Snow'" class="snow-effect" />
@@ -52,7 +57,8 @@ const bgClass = computed(() => {
     Rain: 'bg-gradient-to-br from-[#030712] via-[#0c1a3a] to-[#0d1117]',
     Snow: 'bg-gradient-to-br from-[#0d1525] via-[#121d33] to-[#0a1020]',
     Thunderstorm: 'bg-gradient-to-br from-[#0a0010] via-[#150020] to-[#050510]',
-    Night: 'bg-gradient-to-br from-[#050510] via-[#0a0a2e] to-[#030308]'
+    Night: 'bg-gradient-to-br from-[#050510] via-[#0a0a2e] to-[#030308]',
+    Fog: 'bg-gradient-to-br from-[#1a1a2e] via-[#222232] to-[#161624]'
   }
   return map[props.theme] || map.Clear
 })
@@ -60,7 +66,7 @@ const bgClass = computed(() => {
 const orbColor = computed(() => {
   const map = {
     Clear: 'orb-amber', Clouds: 'orb-slate', Rain: 'orb-blue',
-    Snow: 'orb-cyan', Thunderstorm: 'orb-purple', Night: 'orb-indigo'
+    Snow: 'orb-cyan', Thunderstorm: 'orb-purple', Night: 'orb-indigo', Fog: 'orb-slate'
   }
   return map[props.theme] || 'orb-amber'
 })
@@ -68,7 +74,7 @@ const orbColor = computed(() => {
 const orbColor2 = computed(() => {
   const map = {
     Clear: 'orb-rose', Clouds: 'orb-blue-dim', Rain: 'orb-indigo',
-    Snow: 'orb-blue', Thunderstorm: 'orb-rose', Night: 'orb-purple'
+    Snow: 'orb-blue', Thunderstorm: 'orb-rose', Night: 'orb-purple', Fog: 'orb-blue-dim'
   }
   return map[props.theme] || 'orb-rose'
 })
@@ -79,14 +85,15 @@ const orbColor2 = computed(() => {
 
 .mesh-gradient {
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(167, 139, 250, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, rgba(244, 114, 182, 0.04) 0%, transparent 50%);
+    radial-gradient(ellipse at 20% 50%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(167, 139, 250, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(244, 114, 182, 0.05) 0%, transparent 50%);
 }
 
 .noise {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 128px 128px;
+  opacity: 0.02;
 }
 
 .orb {
@@ -94,18 +101,19 @@ const orbColor2 = computed(() => {
   border-radius: 50%;
   filter: blur(80px);
   animation: float-orb 15s ease-in-out infinite;
+  will-change: transform;
 }
 .orb-1 { width: 500px; height: 500px; top: -150px; right: -100px; }
 .orb-2 { width: 400px; height: 400px; bottom: -100px; left: -100px; animation-delay: -7s; animation-direction: reverse; }
 
-.orb-amber { background: rgba(245, 158, 11, 0.12); }
-.orb-rose { background: rgba(244, 114, 182, 0.08); }
-.orb-blue { background: rgba(59, 130, 246, 0.1); }
-.orb-blue-dim { background: rgba(59, 130, 246, 0.05); }
-.orb-cyan { background: rgba(6, 182, 212, 0.1); }
-.orb-purple { background: rgba(139, 92, 246, 0.12); }
-.orb-indigo { background: rgba(99, 102, 241, 0.1); }
-.orb-slate { background: rgba(148, 163, 184, 0.06); }
+.orb-amber     { background: rgba(245, 158, 11, 0.14); }
+.orb-rose      { background: rgba(244, 114, 182, 0.1); }
+.orb-blue      { background: rgba(59, 130, 246, 0.12); }
+.orb-blue-dim  { background: rgba(59, 130, 246, 0.06); }
+.orb-cyan      { background: rgba(6, 182, 212, 0.12); }
+.orb-purple    { background: rgba(139, 92, 246, 0.14); }
+.orb-indigo    { background: rgba(99, 102, 241, 0.12); }
+.orb-slate     { background: rgba(148, 163, 184, 0.08); }
 
 @keyframes float-orb {
   0%, 100% { transform: translate(0, 0) scale(1); }
@@ -129,6 +137,7 @@ const orbColor2 = computed(() => {
   position: absolute; width: 250px; height: 60px;
   background: rgba(255,255,255,0.03); border-radius: 100px; filter: blur(30px);
   animation: float-cloud linear infinite;
+  will-change: transform;
 }
 .cloud-1 { top: 10%; animation-duration: 45s; }
 .cloud-2 { top: 35%; width: 300px; animation-duration: 55s; animation-delay: -20s; }
@@ -136,6 +145,24 @@ const orbColor2 = computed(() => {
 @keyframes float-cloud {
   from { transform: translateX(-300px); }
   to { transform: translateX(calc(100vw + 300px)); }
+}
+
+/* Brouillard horizontal */
+.fog-band {
+  position: absolute;
+  width: 140%;
+  height: 30%;
+  left: -20%;
+  background: radial-gradient(ellipse at center, rgba(203, 213, 225, 0.08) 0%, transparent 70%);
+  filter: blur(20px);
+  animation: fog-drift linear infinite;
+}
+.fog-1 { top: 15%; animation-duration: 60s; }
+.fog-2 { top: 45%; animation-duration: 80s; animation-delay: -25s; }
+.fog-3 { top: 70%; animation-duration: 50s; animation-delay: -10s; }
+@keyframes fog-drift {
+  from { transform: translateX(-15%); }
+  to   { transform: translateX(15%); }
 }
 
 .rain-effect {
@@ -161,12 +188,12 @@ const orbColor2 = computed(() => {
   to { background-position: 60px 120px, 85px 145px, 110px 130px; }
 }
 
-.lightning-effect { position: absolute; inset: 0; animation: lightning 6s ease-in-out infinite; }
+/* Lightning : flash sporadique sans strobing rapide (1 flash toutes les 6s) */
+.lightning-effect { position: absolute; inset: 0; animation: lightning 7s ease-in-out infinite; }
 @keyframes lightning {
-  0%, 89%, 91%, 93%, 95%, 100% { background: transparent; }
-  90% { background: rgba(167,139,250,0.15); }
-  92% { background: rgba(167,139,250,0.08); }
-  94% { background: rgba(167,139,250,0.12); }
+  0%, 88%, 100% { background: transparent; }
+  90% { background: rgba(167, 139, 250, 0.18); }
+  93% { background: transparent; }
 }
 
 .stars-effect {
@@ -183,6 +210,20 @@ const orbColor2 = computed(() => {
 .moon {
   position: absolute; top: 50px; right: 80px; width: 70px; height: 70px; border-radius: 50%;
   background: linear-gradient(135deg, #e8e8e8, #b8b8b8);
-  box-shadow: inset -8px -8px 16px rgba(0,0,0,0.15), 0 0 50px rgba(255,255,255,0.1), 0 0 100px rgba(167,139,250,0.05);
+  box-shadow:
+    inset -8px -8px 16px rgba(0,0,0,0.15),
+    0 0 50px rgba(255,255,255,0.12),
+    0 0 100px rgba(167,139,250,0.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .sun,
+  .cloud,
+  .fog-band,
+  .rain-effect,
+  .snow-effect,
+  .lightning-effect,
+  .stars-effect { animation: none !important; }
 }
 </style>

@@ -1,36 +1,64 @@
 <!doctype html>
-<html lang="fr" class="dark">
+<html lang="en" class="dark" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
 
     <!-- SEO & Meta -->
-    <title>WeatherPro - Météo en temps réel</title>
-    <meta name="description" content="WeatherPro - Application météo moderne avec prévisions en temps réel, géolocalisation et design élégant." />
-    <meta name="keywords" content="météo, weather, prévisions, température, forecast, vue, app" />
+    <title>WeatherPro — Real-time weather forecasts</title>
+    <meta name="description" content="WeatherPro — Modern weather application with real-time forecasts, geolocation and an elegant dark luxury design." />
+    <meta name="keywords" content="weather, météo, forecast, prévisions, temperature, vue, weatherpro, openweather" />
     <meta name="author" content="WeatherPro" />
+    <meta name="robots" content="index, follow" />
 
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#0a0a1a" />
+    <!-- Theme Color (mis à jour dynamiquement par l'app selon le thème météo courant) -->
+    <meta name="theme-color" content="#050510" />
     <meta name="color-scheme" content="dark light" />
 
     <!-- Apple Meta -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="WeatherPro" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="WeatherPro - Météo en temps réel" />
-    <meta property="og:description" content="Application météo moderne avec prévisions en temps réel et design élégant." />
+    <meta property="og:site_name" content="WeatherPro" />
+    <meta property="og:title" content="WeatherPro — Real-time weather forecasts" />
+    <meta property="og:description" content="Modern weather application with real-time forecasts, geolocation and elegant design." />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="fr_FR" />
 
-    <!-- Favicon -->
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="WeatherPro — Real-time weather forecasts" />
+    <meta name="twitter:description" content="Modern weather app with real-time forecasts and elegant design." />
+
+    <!-- Favicon (SVG inline, sans requête réseau) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect rx='20' width='100' height='100' fill='%230ea5e9'/><text x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='50'>⛅</text></svg>" />
 
-    <!-- Fonts -->
+    <!-- Set <html lang> AVANT le rendu pour SEO/a11y, lit le choix utilisateur en localStorage -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('wp_lang');
+          var nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+          var detected = nav.split('-')[0].toLowerCase();
+          var supported = ['fr', 'en'];
+          var lang = (stored && supported.indexOf(stored) > -1) ? stored
+                    : (supported.indexOf(detected) > -1 ? detected : 'en');
+          document.documentElement.setAttribute('lang', lang);
+        } catch (e) { /* localStorage indisponible — fallback déjà ok */ }
+      })();
+    </script>
+
+    <!-- Fonts : preconnect + chargement non bloquant -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"></noscript>
 
     <link rel="preconnect" href="https://api.openweathermap.org" />
 
@@ -40,16 +68,17 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         scroll-behavior: smooth;
+        text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
       }
-
       body {
         margin: 0;
         min-height: 100vh;
         min-height: 100dvh;
         background: #050510;
         color: #e2e8f0;
+        overflow-x: hidden;
       }
-
       #app:empty {
         display: flex;
         align-items: center;
@@ -57,7 +86,6 @@
         min-height: 100vh;
         background: #050510;
       }
-
       #app:empty::after {
         content: '';
         width: 40px;
@@ -65,16 +93,24 @@
         border: 2px solid rgba(14, 165, 233, 0.2);
         border-top-color: #0ea5e9;
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+        animation: wp-spin 0.8s linear infinite;
       }
-
-      @keyframes spin {
-        to { transform: rotate(360deg); }
+      @keyframes wp-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        #app:empty::after { animation: none; }
+        html { scroll-behavior: auto; }
       }
     </style>
   </head>
   <body class="antialiased">
     <div id="app"></div>
+    <noscript>
+      <div style="padding:2rem;text-align:center;color:#e2e8f0;background:#050510;font-family:sans-serif;">
+        <h1>WeatherPro</h1>
+        <p>This application requires JavaScript to display real-time weather data.</p>
+        <p>Cette application nécessite JavaScript pour afficher les données météo en temps réel.</p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

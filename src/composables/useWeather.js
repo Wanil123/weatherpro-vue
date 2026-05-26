@@ -8,6 +8,12 @@ import { formatCurrent, formatForecastList } from '../utils/formatters'
 import { useNotificationStore } from '../stores/notifications'
 import { useI18n } from '../i18n/useI18n'
 
+function isAbortError(e) {
+  return e?.name === 'AbortError'
+      || e?.name === 'CanceledError'
+      || e?.code === 'ERR_CANCELED'
+}
+
 export function useWeather() {
   const current = ref(null)
   const forecast = ref([])
@@ -15,19 +21,31 @@ export function useWeather() {
   const error = ref(null)
   const { t, lang } = useI18n()
 
-  function getNotifications() {
-    return useNotificationStore()
-  }
+  function notify() { return useNotificationStore() }
 
-  function isAbortError(e) {
-    return e.name === 'AbortError' || e.name === 'CanceledError' || e.code === 'ERR_CANCELED'
+  function handleError(e) {
+    if (isAbortError(e)) return false
+    error.value = e?.message || 'Unknown error'
+
+    const status = e?.response?.status
+    if (status === 404) {
+      notify().warning(t('cityNotFound'), t('cityNotFoundTitle'))
+    } else if (status === 401) {
+      notify().error(t('apiInvalid'), t('apiInvalidTitle'))
+    } else if (e?.code === 'ECONNABORTED' || e?.message?.includes('timeout')) {
+      notify().error(t('connectionError'), t('connectionErrorTitle'))
+    } else {
+      notify().error(t('connectionError'), t('connectionErrorTitle'))
+    }
+    return false
   }
 
   async function fetchByCity(city) {
     if (!isApiConfigured()) {
-      getNotifications().error(t('apiNotConfigured'), t('notifError'))
+      notify().error(t('apiNotConfigured'), t('notifError'))
       return false
     }
+    if (!city || typeof city !== 'string') return false
 
     loading.value = true
     error.value = null
@@ -42,17 +60,7 @@ export function useWeather() {
       forecast.value = formatForecastList(f, lang.value)
       return true
     } catch (e) {
-      if (isAbortError(e)) return false
-      error.value = e.message
-
-      if (e.response?.status === 404) {
-        getNotifications().warning(t('cityNotFound'), t('cityNotFoundTitle'))
-      } else if (e.response?.status === 401) {
-        getNotifications().error(t('apiInvalid'), t('apiInvalidTitle'))
-      } else {
-        getNotifications().error(t('connectionError'), t('connectionErrorTitle'))
-      }
-      return false
+      return handleError(e)
     } finally {
       loading.value = false
     }
@@ -60,9 +68,10 @@ export function useWeather() {
 
   async function fetchByCoords(lat, lon) {
     if (!isApiConfigured()) {
-      getNotifications().error(t('apiNotConfigured'), t('notifError'))
+      notify().error(t('apiNotConfigured'), t('notifError'))
       return false
     }
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return false
 
     loading.value = true
     error.value = null
@@ -75,15 +84,17 @@ export function useWeather() {
       ])
       current.value = formatCurrent(c, lang.value)
       forecast.value = formatForecastList(f, lang.value)
-      getNotifications().success(
-        t('weatherLoaded', { city: current.value.city }),
-        t('locationTitle')
-      )
+      if (current.value?.city) {
+        notify().success(
+          t('weatherLoaded', { city: current.value.city }),
+          t('locationTitle')
+        )
+      }
       return true
     } catch (e) {
       if (isAbortError(e)) return false
-      error.value = e.message
-      getNotifications().error(t('geoError'), t('geoErrorTitle'))
+      error.value = e?.message || 'Unknown error'
+      notify().error(t('geoError'), t('geoErrorTitle'))
       return false
     } finally {
       loading.value = false
@@ -94,15 +105,8 @@ export function useWeather() {
     current.value = null
     forecast.value = []
     error.value = null
+    loading.value = false
   }
 
-  return {
-    current,
-    forecast,
-    loading,
-    error,
-    fetchByCity,
-    fetchByCoords,
-    reset
-  }
+  return { current, forecast, loading, error, fetchByCity, fetchByCoords, reset }
 }

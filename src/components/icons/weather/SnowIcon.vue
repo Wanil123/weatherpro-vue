@@ -1,36 +1,61 @@
 <template>
-  <svg viewBox="0 0 100 100" class="w-full h-full">
+  <svg viewBox="0 0 100 100" class="w-full h-full" :role="title ? 'img' : 'presentation'" :aria-hidden="title ? null : 'true'" focusable="false">
+    <title v-if="title">{{ title }}</title>
+
     <!-- Nuage -->
     <g :class="{ 'animate-float': animated }">
       <path
-        d="M20 50 Q10 50, 10 40 Q10 30, 20 30 Q20 20, 35 20 Q40 12, 55 12 Q75 12, 75 32 Q85 32, 85 42 Q85 52, 75 52 Z"
-        class="fill-slate-300 dark:fill-slate-400"
+        d="M22 52 Q12 52, 12 42 Q12 32, 22 32 Q22 22, 36 22 Q42 14, 56 14 Q74 14, 74 34 Q84 34, 84 44 Q84 54, 74 54 Z"
+        fill="#cbd5e1"
       />
     </g>
 
-    <!-- Flocons de neige -->
-    <g :class="{ 'animate-snow': animated }">
-      <text x="25" y="70" font-size="12" class="fill-white">❄</text>
-      <text x="45" y="78" font-size="10" class="fill-blue-100">❄</text>
-      <text x="65" y="68" font-size="12" class="fill-white">❄</text>
+    <!-- Flocons SVG vectoriels (6 branches) -->
+    <g :class="{ 'animate-snow-1': animated }">
+      <g transform="translate(28, 70)">
+        <use href="#snowflake-a" />
+      </g>
+    </g>
+    <g :class="{ 'animate-snow-2': animated }">
+      <g transform="translate(50, 78)">
+        <use href="#snowflake-b" />
+      </g>
+    </g>
+    <g :class="{ 'animate-snow-3': animated }">
+      <g transform="translate(72, 70)">
+        <use href="#snowflake-a" />
+      </g>
     </g>
 
-    <g :class="{ 'animate-snow-delay': animated }">
-      <text x="35" y="85" font-size="8" class="fill-blue-100">❄</text>
-      <text x="55" y="90" font-size="10" class="fill-white">❄</text>
-      <text x="75" y="82" font-size="8" class="fill-blue-100">❄</text>
-    </g>
-
-    <g :class="{ 'animate-snow-delay-2': animated }">
-      <text x="30" y="95" font-size="6" class="fill-blue-50">❄</text>
-      <text x="50" y="98" font-size="8" class="fill-white">❄</text>
-    </g>
+    <!-- Defs : flocon réutilisable -->
+    <defs>
+      <g id="snowflake-a">
+        <g stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" fill="none">
+          <line x1="0" y1="-6" x2="0" y2="6" />
+          <line x1="-5.2" y1="-3" x2="5.2" y2="3" />
+          <line x1="-5.2" y1="3" x2="5.2" y2="-3" />
+          <!-- petites barbules -->
+          <line x1="0" y1="-6" x2="-1.5" y2="-4.5" />
+          <line x1="0" y1="-6" x2="1.5" y2="-4.5" />
+          <line x1="0" y1="6" x2="-1.5" y2="4.5" />
+          <line x1="0" y1="6" x2="1.5" y2="4.5" />
+        </g>
+      </g>
+      <g id="snowflake-b">
+        <g stroke="#e0e7ff" stroke-width="1" stroke-linecap="round" fill="none">
+          <line x1="0" y1="-4" x2="0" y2="4" />
+          <line x1="-3.5" y1="-2" x2="3.5" y2="2" />
+          <line x1="-3.5" y1="2" x2="3.5" y2="-2" />
+        </g>
+      </g>
+    </defs>
   </svg>
 </template>
 
 <script setup>
 defineProps({
-  animated: { type: Boolean, default: true }
+  animated: { type: Boolean, default: true },
+  title: { type: String, default: '' }
 })
 </script>
 
@@ -40,25 +65,21 @@ defineProps({
   50% { transform: translateY(-2px); }
 }
 
-@keyframes snow {
-  0% { transform: translateY(-5px) rotate(0deg); opacity: 0; }
-  20% { opacity: 1; }
-  100% { transform: translateY(20px) rotate(180deg); opacity: 0; }
+@keyframes snowfall {
+  0%   { transform: translateY(-4px) rotate(0deg); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateY(18px) rotate(180deg); opacity: 0; }
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
+.animate-float    { animation: float 3s ease-in-out infinite; }
+.animate-snow-1   { animation: snowfall 2.6s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+.animate-snow-2   { animation: snowfall 2.6s ease-in-out infinite 0.8s; transform-origin: center; transform-box: fill-box; }
+.animate-snow-3   { animation: snowfall 2.6s ease-in-out infinite 1.5s; transform-origin: center; transform-box: fill-box; }
 
-.animate-snow {
-  animation: snow 3s ease-in-out infinite;
-}
-
-.animate-snow-delay {
-  animation: snow 3s ease-in-out infinite 1s;
-}
-
-.animate-snow-delay-2 {
-  animation: snow 3s ease-in-out infinite 2s;
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-snow-1,
+  .animate-snow-2,
+  .animate-snow-3 { animation: none; }
 }
 </style>

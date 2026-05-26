@@ -3,47 +3,78 @@ import fr from './fr'
 import en from './en'
 
 const messages = { fr, en }
+const SUPPORTED = ['fr', 'en']
+const FALLBACK = 'en'
 const STORAGE_KEY = 'wp_lang'
 
 function detectBrowserLang() {
-  const nav = navigator.language || navigator.userLanguage || ''
-  const lang = nav.split('-')[0].toLowerCase()
-  return lang === 'fr' ? 'fr' : 'en'
+  if (typeof navigator === 'undefined') return FALLBACK
+  // Utilise nav.languages[] (tableau ordonné par préférence) puis nav.language
+  const candidates = Array.isArray(navigator.languages) && navigator.languages.length
+    ? navigator.languages
+    : [navigator.language || '']
+  for (const c of candidates) {
+    const code = (c || '').split('-')[0].toLowerCase()
+    if (SUPPORTED.includes(code)) return code
+  }
+  return FALLBACK
 }
 
 function loadLang() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored && messages[stored]) return stored
-  } catch {}
+  } catch {
+    // localStorage non disponible
+  }
   return detectBrowserLang()
 }
 
 const currentLang = ref(loadLang())
 
+function applyToDocument(val) {
+  if (typeof document === 'undefined') return
+  document.documentElement.setAttribute('lang', val)
+  // Prépare le terrain pour un futur support RTL (ar, he, fa…)
+  const rtlLangs = ['ar', 'he', 'fa', 'ur']
+  document.documentElement.setAttribute('dir', rtlLangs.includes(val) ? 'rtl' : 'ltr')
+}
+
 watch(currentLang, (val) => {
   try {
     localStorage.setItem(STORAGE_KEY, val)
-  } catch {}
-  document.documentElement.setAttribute('lang', val)
+  } catch {
+    // ignore
+  }
+  applyToDocument(val)
 })
 
-// Set initial lang attribute
-if (typeof document !== 'undefined') {
-  document.documentElement.setAttribute('lang', currentLang.value)
+// Sync initial
+applyToDocument(currentLang.value)
+
+/**
+ * Interpolation globale : remplace toutes les occurrences de {key} dans la chaîne.
+ */
+function interpolate(str, params) {
+  if (!params) return str
+  let out = str
+  for (const [k, v] of Object.entries(params)) {
+    // Échappe les caractères regex spéciaux dans la clé pour éviter une injection
+    const safeKey = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    out = out.replace(new RegExp(`\\{${safeKey}\\}`, 'g'), v)
+  }
+  return out
 }
 
 export function useI18n() {
   const lang = currentLang
 
   function t(key, params) {
-    let str = messages[lang.value]?.[key] || messages.fr[key] || key
-    if (params) {
-      for (const [k, v] of Object.entries(params)) {
-        str = str.replace(`{${k}}`, v)
-      }
-    }
-    return str
+    const str =
+      messages[lang.value]?.[key] ??
+      messages[FALLBACK]?.[key] ??
+      key
+    return interpolate(str, params)
   }
 
   function toggleLang() {

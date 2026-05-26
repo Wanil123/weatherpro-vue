@@ -4,11 +4,18 @@ export default {
   appSubtitle: 'Real-time forecasts',
   footerData: 'Data by',
   footerBuilt: 'Built with Vue.js',
+  skipToContent: 'Skip to content',
+  langSwitchAria: 'Switch to {to}',
+  langLabel: 'EN',
+  degreesCelsius: 'degrees Celsius',
+  precipitationProbability: 'precipitation probability',
 
   // SearchBar
   searchPlaceholder: 'Search a city (e.g. Paris, FR)',
   searchAriaLabel: 'Search a city',
   searchBtn: 'Search',
+  searching: 'Searching…',
+  clearInputAria: 'Clear input',
   geolocateBtn: 'My location',
   geolocateAriaLabel: 'Use my location',
 
@@ -31,8 +38,9 @@ export default {
 
   // ForecastList
   forecastAria: '5-day forecast',
-  forecastTitle: 'Forecast (5 days)',
+  forecastTitle: '5-day forecast',
   forecastCardAria: 'Forecast for {day}: {desc}',
+  noForecast: 'No forecast available',
 
   // FavoritesPanel
   favoritesAria: 'Favorite cities',
@@ -40,10 +48,12 @@ export default {
   clearAll: 'Clear',
   clearAllFavoritesAria: 'Remove all favorites',
   viewCityWeather: 'View weather for {city}',
-  removeFavoriteAria: 'Remove from favorites',
-  noFavorites: 'No favorite cities',
-  favoriteRemoved: 'Favorite removed',
-  allFavoritesCleared: 'All favorites have been cleared',
+  removeFavoriteAria: 'Remove favorite',
+  noFavorites: 'No favorite cities yet',
+  favoriteRemovedMsg: '{city} removed from favorites',
+  favoriteRemovedTitle: 'Favorites',
+  allFavoritesCleared: 'All favorites cleared',
+  confirmClearAllFavorites: 'Remove all favorite cities? This cannot be undone.',
 
   // SearchHistory
   historyAria: 'Search history',
@@ -52,6 +62,7 @@ export default {
   clearHistoryAria: 'Clear search history',
   searchCity: 'Search {city}',
   noHistory: 'No recent searches',
+  confirmClearHistory: 'Clear the search history?',
 
   // WeatherGreeting
   greetingMorning: 'Good morning, {city}',
@@ -63,6 +74,10 @@ export default {
   subtitleMild: 'Pleasant temperature to go out.',
   subtitleWarm: 'Beautiful day ahead!',
   subtitleHot: 'Intense heat, stay hydrated!',
+  emojiSun: 'sun',
+  emojiPartlySun: 'partly cloudy',
+  emojiSunset: 'sunset',
+  emojiMoon: 'moon',
 
   // ThemeToggle
   themeToggleAria: 'Toggle light and dark mode',
@@ -70,7 +85,7 @@ export default {
   // LoadingSpinner
   loadingAria: 'Loading',
   loadingText: 'Loading weather data',
-  loadingSubtext: 'Please wait...',
+  loadingSubtext: 'Please wait…',
   loadingSr: 'Loading, please wait',
 
   // ToastNotifications
@@ -109,8 +124,5 @@ export default {
 
   // Favorites toggle
   cityAddedToFavorites: '{city} added to favorites',
-  cityRemovedFromFavorites: '{city} removed from favorites',
-
-  // Language
-  langLabel: 'EN',
+  cityRemovedFromFavorites: '{city} removed from favorites'
 }
