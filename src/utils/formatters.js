@@ -42,6 +42,7 @@ export function formatCurrent(raw, lang = 'fr') {
     visibility: num(c.visibility) != null
       ? Number((c.visibility / 1000).toFixed(1))  // m → km
       : null,
+    uvIndex: num(c.uv_index) != null ? Math.round(c.uv_index) : null,
     sunrise: fmtLocalTime(day0.sunrise?.[0], lang),
     sunset: fmtLocalTime(day0.sunset?.[0], lang),
     date: dateObj?.isValid() ? dateObj.format(dateFormat(lang)) : '',

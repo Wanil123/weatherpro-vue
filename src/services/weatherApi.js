@@ -14,7 +14,7 @@ const REVERSE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client'
 
 const CURRENT_FIELDS = [
   'temperature_2m', 'relative_humidity_2m', 'apparent_temperature',
-  'is_day', 'weather_code', 'wind_speed_10m', 'surface_pressure', 'visibility'
+  'is_day', 'weather_code', 'wind_speed_10m', 'surface_pressure', 'visibility', 'uv_index'
 ].join(',')
 const DAILY_FIELDS = [
   'weather_code', 'temperature_2m_max', 'temperature_2m_min',
