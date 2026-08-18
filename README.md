@@ -12,7 +12,7 @@ A modern, elegant Vue 3 weather application with real-time forecasts, geolocatio
 
 ## ✨ Features
 
-- 🌍 **Real-time weather** for any city via the OpenWeatherMap API
+- 🌍 **Real-time weather** for any city via the free Open-Meteo API (no API key required)
 - 📍 **Geolocation** with graceful permission handling
 - 🗓️ **5-day forecast** with daily aggregation
 - ⭐ **Favorites & search history** (persisted in `localStorage`)

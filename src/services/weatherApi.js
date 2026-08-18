@@ -1,81 +1,79 @@
 import axios from 'axios'
 
-// Clé API — DOIT être définie dans .env (VITE_OPENWEATHER_KEY)
-// ATTENTION : toute variable VITE_* est inlinée dans le bundle client.
-// En production, faire passer la clé par un proxy serverless.
-const API_KEY = import.meta.env.VITE_OPENWEATHER_KEY
+// ────────────────────────────────────────────────────────────────────────────
+// Fournisseur météo : Open-Meteo (100 % gratuit, AUCUNE clé API requise).
+//   • Prévisions  : https://api.open-meteo.com/v1/forecast
+//   • Géocodage   : https://geocoding-api.open-meteo.com/v1/search
+//   • Géocodage inversé (coords → ville) : BigDataCloud (client, sans clé)
+// Aucun secret n'est exposé dans le bundle — parfait pour une démo publique.
+// ────────────────────────────────────────────────────────────────────────────
 
-if (!API_KEY) {
-  // eslint-disable-next-line no-console
-  console.error('[WeatherPro] VITE_OPENWEATHER_KEY missing in .env')
+const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
+const GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search'
+const REVERSE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client'
+
+const CURRENT_FIELDS = [
+  'temperature_2m', 'relative_humidity_2m', 'apparent_temperature',
+  'is_day', 'weather_code', 'wind_speed_10m', 'surface_pressure', 'visibility'
+].join(',')
+const DAILY_FIELDS = [
+  'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+  'precipitation_probability_max', 'sunrise', 'sunset'
+].join(',')
+
+const REQUEST_TIMEOUT = 10_000
+const CACHE_TTL = 1000 * 60 * 10   // 10 min
+const MEMORY_CACHE_LIMIT = 50
+
+// Erreur métier « ville introuvable » (traitée spécifiquement par useWeather).
+export class CityNotFoundError extends Error {
+  constructor(message = 'City not found') {
+    super(message)
+    this.name = 'CityNotFoundError'
+    this.code = 'CITY_NOT_FOUND'
+  }
 }
 
-const BASE = 'https://api.openweathermap.org/data/2.5'
-const REQUEST_TIMEOUT = 10_000 // 10s
-const CACHE_TTL_CURRENT = 1000 * 60 * 5   // 5 min pour current
-const CACHE_TTL_FORECAST = 1000 * 60 * 15 // 15 min pour forecast
-const MEMORY_CACHE_LIMIT = 50 // LRU max entries
-
-function getDefaultParams(lang = 'fr') {
-  return { units: 'metric', lang, appid: API_KEY }
-}
-
-// Cache mémoire LRU + sessionStorage
+// ── Cache mémoire LRU + sessionStorage ──────────────────────────────────────
 const memoryCache = new Map()
-
-// AbortController centralisé : un par groupe de requêtes
-let currentController = null
-
-function createCacheKey(url, params) {
-  // On exclut appid pour ne pas écrire la clé API dans le sessionStorage
-  const { appid, ...rest } = params
-  return `${url}:${JSON.stringify(rest)}`
-}
 
 function lruTouch(key, value) {
   if (memoryCache.has(key)) memoryCache.delete(key)
   memoryCache.set(key, value)
   if (memoryCache.size > MEMORY_CACHE_LIMIT) {
-    // Supprime l'entrée la plus ancienne (premier item de Map)
-    const oldestKey = memoryCache.keys().next().value
-    memoryCache.delete(oldestKey)
+    memoryCache.delete(memoryCache.keys().next().value)
   }
 }
 
 function getFromCache(key, ttl) {
-  const memCached = memoryCache.get(key)
-  if (memCached && Date.now() - memCached.timestamp < ttl) {
-    // Touch LRU
+  const mem = memoryCache.get(key)
+  if (mem && Date.now() - mem.timestamp < ttl) {
     memoryCache.delete(key)
-    memoryCache.set(key, memCached)
-    return memCached
+    memoryCache.set(key, mem)
+    return mem.data
   }
-
   try {
     const stored = sessionStorage.getItem(key)
     if (stored) {
       const parsed = JSON.parse(stored)
-      if (parsed && parsed.timestamp && Date.now() - parsed.timestamp < ttl) {
+      if (parsed?.timestamp && Date.now() - parsed.timestamp < ttl) {
         lruTouch(key, parsed)
-        return parsed
+        return parsed.data
       }
       sessionStorage.removeItem(key)
     }
-  } catch {
-    // sessionStorage indisponible (mode privé) → silent
-  }
+  } catch { /* mode privé → silencieux */ }
   return null
 }
 
 function setToCache(key, data) {
   const pack = { timestamp: Date.now(), data }
   lruTouch(key, pack)
-  try {
-    sessionStorage.setItem(key, JSON.stringify(pack))
-  } catch {
-    // Quota dépassé / privé → silent
-  }
+  try { sessionStorage.setItem(key, JSON.stringify(pack)) } catch { /* quota → silencieux */ }
 }
+
+// ── AbortController centralisé ──────────────────────────────────────────────
+let currentController = null
 
 export function cancelPendingRequests() {
   if (currentController) {
@@ -90,54 +88,83 @@ export function createRequestGroup() {
   return currentController.signal
 }
 
-function isAborted(signal) {
-  return signal && signal.aborted
+function ensureNotAborted(signal) {
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
 }
 
-async function request(url, params, signal, ttl) {
-  if (!API_KEY) {
-    throw new Error('OpenWeather API key not configured')
-  }
-
-  // Respect explicite du signal d'abort, même pour le cache
-  if (isAborted(signal)) {
-    throw new DOMException('Aborted', 'AbortError')
-  }
-
-  const cacheKey = createCacheKey(url, params)
-  const cached = getFromCache(cacheKey, ttl)
-  if (cached) return cached.data
-
-  // Re-vérification au cas où l'utilisateur a annulé pendant le lookup cache
-  if (isAborted(signal)) {
-    throw new DOMException('Aborted', 'AbortError')
-  }
-
-  const { data } = await axios.get(url, {
-    params,
-    signal,
-    timeout: REQUEST_TIMEOUT
-  })
-  setToCache(cacheKey, data)
+async function getJson(url, params, signal) {
+  const { data } = await axios.get(url, { params, signal, timeout: REQUEST_TIMEOUT })
   return data
 }
 
-export function getCurrentByCity(q, signal, lang) {
-  return request(`${BASE}/weather`, { ...getDefaultParams(lang), q }, signal, CACHE_TTL_CURRENT)
+// ── Appels bas niveau ───────────────────────────────────────────────────────
+async function geocodeCity(city, signal, lang) {
+  const data = await getJson(GEOCODE_URL, { name: city, count: 1, language: lang, format: 'json' }, signal)
+  const r = data?.results?.[0]
+  if (!r) throw new CityNotFoundError()
+  return { name: r.name, country: r.country || r.country_code || '', lat: r.latitude, lon: r.longitude }
 }
 
-export function getForecastByCity(q, signal, lang) {
-  return request(`${BASE}/forecast`, { ...getDefaultParams(lang), q }, signal, CACHE_TTL_FORECAST)
+async function reverseGeocode(lat, lon, signal, lang) {
+  try {
+    const data = await getJson(REVERSE_URL, { latitude: lat, longitude: lon, localityLanguage: lang }, signal)
+    return { name: data?.city || data?.locality || '—', country: data?.countryCode || '' }
+  } catch {
+    return { name: '—', country: '' } // le géocodage inversé est un « nice-to-have »
+  }
 }
 
-export function getCurrentByCoords(lat, lon, signal, lang) {
-  return request(`${BASE}/weather`, { ...getDefaultParams(lang), lat, lon }, signal, CACHE_TTL_CURRENT)
+async function fetchForecast(lat, lon, signal, lang) {
+  return getJson(FORECAST_URL, {
+    latitude: lat, longitude: lon,
+    current: CURRENT_FIELDS, daily: DAILY_FIELDS,
+    timezone: 'auto', forecast_days: 5, wind_speed_unit: 'kmh', lang
+  }, signal)
 }
 
-export function getForecastByCoords(lat, lon, signal, lang) {
-  return request(`${BASE}/forecast`, { ...getDefaultParams(lang), lat, lon }, signal, CACHE_TTL_FORECAST)
+function pack(place, forecast) {
+  return {
+    place,
+    current: forecast.current,
+    daily: forecast.daily,
+    utcOffsetSeconds: forecast.utc_offset_seconds ?? 0,
+    timezone: forecast.timezone || 'UTC'
+  }
 }
 
+// ── API publique (mêmes points d'entrée que consomme useWeather) ────────────
+export async function getWeatherByCity(city, signal, lang = 'fr') {
+  if (!city || typeof city !== 'string') throw new CityNotFoundError()
+  ensureNotAborted(signal)
+
+  const cacheKey = `city:${city.trim().toLowerCase()}:${lang}`
+  const cached = getFromCache(cacheKey, CACHE_TTL)
+  if (cached) return cached
+
+  const place = await geocodeCity(city.trim(), signal, lang)
+  const forecast = await fetchForecast(place.lat, place.lon, signal, lang)
+  const result = pack(place, forecast)
+  setToCache(cacheKey, result)
+  return result
+}
+
+export async function getWeatherByCoords(lat, lon, signal, lang = 'fr') {
+  ensureNotAborted(signal)
+
+  const cacheKey = `coords:${lat.toFixed(2)}:${lon.toFixed(2)}:${lang}`
+  const cached = getFromCache(cacheKey, CACHE_TTL)
+  if (cached) return cached
+
+  const [place, forecast] = await Promise.all([
+    reverseGeocode(lat, lon, signal, lang),
+    fetchForecast(lat, lon, signal, lang)
+  ])
+  const result = pack(place, forecast)
+  setToCache(cacheKey, result)
+  return result
+}
+
+// Plus de clé à configurer : toujours prêt.
 export function isApiConfigured() {
-  return !!API_KEY
+  return true
 }

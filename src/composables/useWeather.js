@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import {
-  getCurrentByCity, getForecastByCity,
-  getCurrentByCoords, getForecastByCoords,
+  getWeatherByCity, getWeatherByCoords,
   isApiConfigured, createRequestGroup
 } from '../services/weatherApi'
 import { formatCurrent, formatForecastList } from '../utils/formatters'
@@ -28,10 +27,8 @@ export function useWeather() {
     error.value = e?.message || 'Unknown error'
 
     const status = e?.response?.status
-    if (status === 404) {
+    if (e?.code === 'CITY_NOT_FOUND' || status === 404) {
       notify().warning(t('cityNotFound'), t('cityNotFoundTitle'))
-    } else if (status === 401) {
-      notify().error(t('apiInvalid'), t('apiInvalidTitle'))
     } else if (e?.code === 'ECONNABORTED' || e?.message?.includes('timeout')) {
       notify().error(t('connectionError'), t('connectionErrorTitle'))
     } else {
@@ -52,12 +49,9 @@ export function useWeather() {
     const signal = createRequestGroup()
 
     try {
-      const [c, f] = await Promise.all([
-        getCurrentByCity(city, signal, lang.value),
-        getForecastByCity(city, signal, lang.value)
-      ])
-      current.value = formatCurrent(c, lang.value)
-      forecast.value = formatForecastList(f, lang.value)
+      const raw = await getWeatherByCity(city, signal, lang.value)
+      current.value = formatCurrent(raw, lang.value)
+      forecast.value = formatForecastList(raw, lang.value)
       return true
     } catch (e) {
       return handleError(e)
@@ -78,12 +72,9 @@ export function useWeather() {
     const signal = createRequestGroup()
 
     try {
-      const [c, f] = await Promise.all([
-        getCurrentByCoords(lat, lon, signal, lang.value),
-        getForecastByCoords(lat, lon, signal, lang.value)
-      ])
-      current.value = formatCurrent(c, lang.value)
-      forecast.value = formatForecastList(f, lang.value)
+      const raw = await getWeatherByCoords(lat, lon, signal, lang.value)
+      current.value = formatCurrent(raw, lang.value)
+      forecast.value = formatForecastList(raw, lang.value)
       if (current.value?.city) {
         notify().success(
           t('weatherLoaded', { city: current.value.city }),

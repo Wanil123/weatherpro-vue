@@ -3,6 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
+  // Servi sous https://wanil123.github.io/weatherpro-vue/
+  base: '/weatherpro-vue/',
   plugins: [vue()],
 
   resolve: {

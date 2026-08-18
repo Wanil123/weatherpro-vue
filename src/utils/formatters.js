@@ -1,105 +1,74 @@
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import 'dayjs/locale/en'
-import utc from 'dayjs/plugin/utc'
+import { decodeWeather } from './wmo'
 
-dayjs.extend(utc)
+// Formats dépendants de la langue (12 h pour EN, 24 h pour FR)
+function timeFormat(lang) { return lang === 'en' ? 'h:mm A' : 'HH:mm' }
+function dateFormat(lang) { return lang === 'en' ? 'dddd MMM D, YYYY' : 'dddd D MMM YYYY' }
 
-// Formats heure dépendants de la langue (12h pour EN, 24h pour FR)
-function timeFormat(lang) {
-  return lang === 'en' ? 'h:mm A' : 'HH:mm'
+// Les timestamps Open-Meteo (timezone=auto) sont déjà à l'heure LOCALE du lieu,
+// sans décalage → on parse en naïf et les chiffres d'horloge sont préservés
+// quelle que soit la timezone du navigateur.
+function fmtLocalTime(isoLocal, lang) {
+  if (!isoLocal) return '—'
+  const d = dayjs(isoLocal)
+  return d.isValid() ? d.locale(lang).format(timeFormat(lang)) : '—'
 }
 
-function dateFormat(lang) {
-  return lang === 'en' ? 'dddd MMM D, YYYY' : 'dddd D MMM YYYY'
-}
-
-function toLocalTime(ts, tzSec, lang = 'fr') {
-  if (typeof ts !== 'number') return '—'
-  return dayjs.unix(ts).utcOffset(tzSec / 60).locale(lang).format(timeFormat(lang))
-}
+function num(v) { return typeof v === 'number' && Number.isFinite(v) ? v : null }
 
 export function formatCurrent(raw, lang = 'fr') {
-  if (!raw || typeof raw !== 'object') {
+  if (!raw || typeof raw !== 'object' || !raw.current) {
     throw new Error('formatCurrent: invalid raw response')
   }
-  const tz = raw.timezone || 0
-  const iconCode = raw.weather?.[0]?.icon || '01d'
-  // `endsWith('n')` est plus précis que `includes('n')` (évite faux positifs sur futurs codes)
-  const isNight = iconCode.endsWith('n')
+  const c = raw.current
+  const isDay = c.is_day === 1 || c.is_day === true
+  const { icon, main, description } = decodeWeather(c.weather_code, isDay, lang)
+  const day0 = raw.daily || {}
+
+  const dateObj = c.time ? dayjs(c.time).locale(lang) : null
 
   return {
-    city: raw.name || '—',
-    country: raw.sys?.country || '',
-    temperature: typeof raw.main?.temp === 'number' ? raw.main.temp : null,
-    feelsLike: typeof raw.main?.feels_like === 'number' ? raw.main.feels_like : null,
-    description: raw.weather?.[0]?.description || '',
-    icon: iconCode,
-    humidity: typeof raw.main?.humidity === 'number' ? raw.main.humidity : null,
-    windSpeed: typeof raw.wind?.speed === 'number' ? raw.wind.speed * 3.6 : 0,
-    pressure: typeof raw.main?.pressure === 'number' ? raw.main.pressure : null,
-    visibility: typeof raw.visibility === 'number'
-      ? Number((raw.visibility / 1000).toFixed(1))
+    city: raw.place?.name || '—',
+    country: raw.place?.country || '',
+    temperature: num(c.temperature_2m),
+    feelsLike: num(c.apparent_temperature),
+    description,
+    icon,
+    humidity: num(c.relative_humidity_2m),
+    windSpeed: num(c.wind_speed_10m) ?? 0,       // déjà en km/h (wind_speed_unit=kmh)
+    pressure: num(c.surface_pressure),
+    visibility: num(c.visibility) != null
+      ? Number((c.visibility / 1000).toFixed(1))  // m → km
       : null,
-    // uvIndex non disponible depuis /weather — retiré du payload (l'affichage affichera '—')
-    sunrise: toLocalTime(raw.sys?.sunrise, tz, lang),
-    sunset: toLocalTime(raw.sys?.sunset, tz, lang),
-    date: typeof raw.dt === 'number'
-      ? dayjs.unix(raw.dt).utcOffset(tz / 60).locale(lang).format(dateFormat(lang))
-      : '',
-    localTime: typeof raw.dt === 'number'
-      ? dayjs.unix(raw.dt).utcOffset(tz / 60).locale(lang).format(timeFormat(lang))
-      : '',
-    isNight,
-    main: raw.weather?.[0]?.main || 'Clear'
+    sunrise: fmtLocalTime(day0.sunrise?.[0], lang),
+    sunset: fmtLocalTime(day0.sunset?.[0], lang),
+    date: dateObj?.isValid() ? dateObj.format(dateFormat(lang)) : '',
+    localTime: dateObj?.isValid() ? dateObj.format(timeFormat(lang)) : '',
+    isNight: !isDay,
+    main
   }
 }
 
 export function formatForecastList(raw, lang = 'fr') {
-  if (!raw || !Array.isArray(raw.list)) return []
+  const d = raw?.daily
+  if (!d || !Array.isArray(d.time)) return []
 
-  const byDay = new Map()
-  for (const it of raw.list) {
-    if (!it?.dt_txt) continue
-    const d = it.dt_txt.split(' ')[0]
-    if (!byDay.has(d)) byDay.set(d, [])
-    byDay.get(d).push(it)
-  }
-
-  const entries = Array.from(byDay.entries()).slice(0, 5)
-  return entries.map(([date, arr]) => {
-    if (!arr.length) return null
-
-    const temps = arr.map(x => x.main?.temp).filter(t => typeof t === 'number')
-    const min = temps.length ? Math.min(...temps) : null
-    const max = temps.length ? Math.max(...temps) : null
-
-    // Icon le plus fréquent
-    const freq = new Map()
-    for (const it of arr) {
-      const ic = it.weather?.[0]?.icon
-      if (ic) freq.set(ic, (freq.get(ic) || 0) + 1)
-    }
-    const icon = [...freq.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '01d'
-
-    // Description : on prend celle de l'icon le plus fréquent pour cohérence
-    const matching = arr.find(x => x.weather?.[0]?.icon === icon)
-    const desc = matching?.weather?.[0]?.description || arr[Math.floor(arr.length / 2)]?.weather?.[0]?.description || ''
-
-    const pops = arr.map(x => x.pop).filter(p => typeof p === 'number')
-    const pop = pops.length
-      ? Math.round(100 * (pops.reduce((s, x) => s + x, 0) / pops.length))
-      : 0
-
-    const djs = dayjs(date).locale(lang)
-    return {
+  const out = []
+  for (let i = 0; i < d.time.length && i < 5; i++) {
+    const djs = dayjs(d.time[i]).locale(lang)
+    if (!djs.isValid()) continue
+    const { icon, description } = decodeWeather(d.weather_code?.[i], true, lang) // icône de jour
+    out.push({
       day: djs.format('dddd'),
       date: djs.format('D MMM'),
-      tempMin: min,
-      tempMax: max,
+      tempMin: num(d.temperature_2m_min?.[i]),
+      tempMax: num(d.temperature_2m_max?.[i]),
       icon,
-      description: desc,
-      precipitation: pop
-    }
-  }).filter(Boolean)
+      description,
+      precipitation: num(d.precipitation_probability_max?.[i]) ?? 0
+    })
+  }
+  return out
 }
